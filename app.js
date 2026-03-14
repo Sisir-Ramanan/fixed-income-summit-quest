@@ -6,20 +6,33 @@
 
 /* ---------- CONFIG ---------- */
 const GOOGLE_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbzWEJ3EophhhzU9CizlMghjHXearEptLBO7PoX2Q7rjSwh_ciGaAIybKV3J4xoELjko/exec';
-const BASE_CAMP_ORDER = ['bond_pricing', 'ytm', 'forward_rates', 'duration', 'expectations_hypothesis'];
+const BASE_CAMP_ORDER = ['bond_pricing', 'forward_rates', 'duration', 'expectations_hypothesis', 'eh_tests', 'cochrane_piazzesi', 'yield_curve_factors'];
 const BASE_CAMP_LABELS = {
-  bond_pricing: 'Bond Pricing Basics',
-  ytm: 'Yield Measures',
-  forward_rates: 'Forward Rates & Yield Curves',
+  bond_pricing: 'Bond Pricing & Yields',
+  forward_rates: 'Forward Rates',
   duration: 'Duration & Risk',
-  expectations_hypothesis: 'Expectations Hypothesis'
+  expectations_hypothesis: 'Expectations Hypothesis',
+  eh_tests: 'Campbell-Shiller & Fama-Bliss',
+  cochrane_piazzesi: 'Cochrane-Piazzesi',
+  yield_curve_factors: 'Level, Slope & Curvature'
 };
 const BASE_CAMP_ICONS = {
   bond_pricing: '1',
-  ytm: '2',
-  forward_rates: '3',
-  duration: '4',
-  expectations_hypothesis: '5'
+  forward_rates: '2',
+  duration: '3',
+  expectations_hypothesis: '4',
+  eh_tests: '5',
+  cochrane_piazzesi: '6',
+  yield_curve_factors: '7'
+};
+const BASE_CAMP_SVG_LABELS = {
+  bond_pricing: 'Bond Pricing',
+  forward_rates: 'Fwd Rates',
+  duration: 'Duration',
+  expectations_hypothesis: 'Expect. Hyp.',
+  eh_tests: 'CS & FB',
+  cochrane_piazzesi: 'CP Factor',
+  yield_curve_factors: 'L, S & C'
 };
 
 /* ---------- UTILITIES ---------- */
@@ -333,7 +346,7 @@ function initCampProgress() {
 
 function renderMountain() {
   const completed = session.game.baseCampsCompleted.length;
-  document.getElementById('camps-completed').textContent = `${completed} / 5 camps`;
+  document.getElementById('camps-completed').textContent = `${completed} / ${BASE_CAMP_ORDER.length} camps`;
 
   // Render SVG mountain
   renderMountainSVG();
@@ -367,7 +380,7 @@ function renderMountain() {
 
   // Summit button
   const summitBtn = document.getElementById('btn-summit');
-  if (completed === 5) {
+  if (completed === BASE_CAMP_ORDER.length) {
     summitBtn.classList.remove('hidden');
   } else {
     summitBtn.classList.add('hidden');
@@ -377,21 +390,22 @@ function renderMountain() {
 function renderMountainSVG() {
   const container = document.getElementById('mountain-svg-container');
   const completed = session.game.baseCampsCompleted;
-  const total = 5;
+  const total = BASE_CAMP_ORDER.length;
 
-  // Mountain SVG with path and base camps
-  const w = 700, h = 400;
-  // Camp positions on the mountain (x, y)
+  // Mountain SVG with path and 7 base camps
+  const w = 700, h = 440;
   const positions = [
-    { x: 100, y: 340 },  // Camp 1: Bond Pricing
-    { x: 220, y: 280 },  // Camp 2: Yield Measures
-    { x: 380, y: 220 },  // Camp 3: Forward Rates
-    { x: 510, y: 150 },  // Camp 4: Duration
-    { x: 590, y: 90 },   // Camp 5: Expectations Hypothesis
+    { x: 85,  y: 380 },  // Camp 1: Bond Pricing
+    { x: 165, y: 330 },  // Camp 2: Forward Rates
+    { x: 250, y: 285 },  // Camp 3: Duration
+    { x: 330, y: 240 },  // Camp 4: Expectations Hypothesis
+    { x: 410, y: 195 },  // Camp 5: Campbell-Shiller & Fama-Bliss
+    { x: 485, y: 150 },  // Camp 6: Cochrane-Piazzesi
+    { x: 555, y: 110 },  // Camp 7: Level, Slope & Curvature
   ];
-  const summit = { x: 520, y: 40 };
+  const summit = { x: 530, y: 45 };
 
-  let pathD = `M 50 370`;
+  let pathD = `M 30 420`;
   positions.forEach(p => { pathD += ` L ${p.x} ${p.y}`; });
   pathD += ` L ${summit.x} ${summit.y}`;
 
@@ -401,23 +415,24 @@ function renderMountainSVG() {
     const isDone = completed.includes(conceptId);
     const fill = isDone ? '#0f7f3e' : '#d4dbe6';
     const textFill = isDone ? '#fff' : '#3a4557';
+    const label = BASE_CAMP_SVG_LABELS[conceptId] || BASE_CAMP_LABELS[conceptId];
 
     campsSvg += `
-      <circle cx="${p.x}" cy="${p.y}" r="22" fill="${fill}" stroke="#fff" stroke-width="3"/>
+      <circle cx="${p.x}" cy="${p.y}" r="22" fill="${fill}" stroke="#fff" stroke-width="2.5"/>
       <text x="${p.x}" y="${p.y + 5}" text-anchor="middle" font-size="14" font-weight="bold" fill="${textFill}">${isDone ? '\u2713' : i + 1}</text>
-      <text x="${p.x}" y="${p.y + 40}" text-anchor="middle" font-size="10" fill="#5a6473">${BASE_CAMP_LABELS[conceptId].split(' ')[0]}</text>
+      <text x="${p.x}" y="${p.y + 38}" text-anchor="middle" font-size="10" fill="#5a6473">${label}</text>
     `;
   });
 
   // Summit marker
   const allDone = completed.length === total;
   campsSvg += `
-    <polygon points="${summit.x},${summit.y - 18} ${summit.x - 14},${summit.y + 10} ${summit.x + 14},${summit.y + 10}" fill="${allDone ? '#f0c040' : '#c8cdd8'}" stroke="#fff" stroke-width="2"/>
-    <text x="${summit.x}" y="${summit.y + 4}" text-anchor="middle" font-size="10" font-weight="bold" fill="${allDone ? '#5a3800' : '#888'}">\u26F0</text>
+    <polygon points="${summit.x},${summit.y - 20} ${summit.x - 16},${summit.y + 12} ${summit.x + 16},${summit.y + 12}" fill="${allDone ? '#f0c040' : '#c8cdd8'}" stroke="#fff" stroke-width="2"/>
+    <text x="${summit.x}" y="${summit.y + 6}" text-anchor="middle" font-size="12" font-weight="bold" fill="${allDone ? '#5a3800' : '#888'}">\u26F0</text>
   `;
 
-  // Climber position: on the last completed camp, or at start
-  let climberPos = { x: 50, y: 350 };
+  // Climber position
+  let climberPos = { x: 40, y: 400 };
   if (completed.length > 0) {
     const lastIdx = Math.max(...completed.map(c => BASE_CAMP_ORDER.indexOf(c)));
     climberPos = positions[lastIdx];
@@ -425,14 +440,14 @@ function renderMountainSVG() {
   if (allDone) climberPos = summit;
 
   campsSvg += `
-    <circle cx="${climberPos.x}" cy="${climberPos.y - 30}" r="8" fill="#d96d0f" stroke="#fff" stroke-width="2">
-      <animate attributeName="cy" values="${climberPos.y - 30};${climberPos.y - 34};${climberPos.y - 30}" dur="1.5s" repeatCount="indefinite"/>
+    <circle cx="${climberPos.x}" cy="${climberPos.y - 34}" r="9" fill="#d96d0f" stroke="#fff" stroke-width="2">
+      <animate attributeName="cy" values="${climberPos.y - 34};${climberPos.y - 38};${climberPos.y - 34}" dur="1.5s" repeatCount="indefinite"/>
     </circle>
   `;
 
   // Mountain shape background
   const mountainBg = `
-    <polygon points="50,370 200,180 350,120 480,60 600,30 700,80 700,370" fill="url(#mountainGrad)" opacity="0.15"/>
+    <polygon points="30,420 120,330 250,250 380,180 500,120 600,70 680,40 700,60 700,420" fill="url(#mountainGrad)" opacity="0.15"/>
     <defs>
       <linearGradient id="mountainGrad" x1="0" y1="1" x2="0.5" y2="0">
         <stop offset="0%" stop-color="#4a7c6f"/>
@@ -481,7 +496,7 @@ function renderBaseCampQuestion() {
     renderMountain();
 
     // Check if all camps done
-    if (session.game.baseCampsCompleted.length === 5) {
+    if (session.game.baseCampsCompleted.length === BASE_CAMP_ORDER.length) {
       session.game.endTime = now();
       setTimeout(() => {
         showScreen('screen-summit');

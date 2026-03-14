@@ -972,19 +972,25 @@ function showResults() {
     // Find pre/post scores for this concept
     const preR = session.preQuiz.responses.find(r => r.conceptTag === conceptId);
     const postR = session.postQuiz.responses.find(r => r.conceptTag === conceptId);
+    const hasPre = !!preR;
+    const hasPost = !!postR;
     const preOk = preR && preR.isCorrect ? 1 : 0;
     const postOk = postR && postR.isCorrect ? 1 : 0;
-    const g = postOk - preOk;
+    const canCompare = hasPre && hasPost;
+    const g = canCompare ? postOk - preOk : null;
 
     const row = document.createElement('div');
     row.className = 'concept-row';
-    const gainClass = g > 0 ? 'positive' : g < 0 ? 'negative' : 'neutral';
+    const gainClass = g !== null ? (g > 0 ? 'positive' : g < 0 ? 'negative' : 'neutral') : 'neutral';
+    const preDisplay = hasPre ? `Pre: ${preOk}/1` : 'Pre: —';
+    const postDisplay = hasPost ? `Post: ${postOk}/1` : 'Post: —';
+    const gainDisplay = g !== null ? `${g > 0 ? '+' : ''}${g}` : '—';
     row.innerHTML = `
       <span class="concept-name">${escapeHtml(label)}</span>
       <span class="concept-scores">
-        <span class="score-pre">Pre: ${preOk}/1</span>
-        <span class="score-post">Post: ${postOk}/1</span>
-        <span class="score-gain ${gainClass}">${g > 0 ? '+' : ''}${g}</span>
+        <span class="score-pre">${preDisplay}</span>
+        <span class="score-post">${postDisplay}</span>
+        <span class="score-gain ${gainClass}">${gainDisplay}</span>
       </span>
     `;
     breakdownEl.appendChild(row);
